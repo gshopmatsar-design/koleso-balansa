@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Диагностика баланса</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0d;
+  --surface: #161616;
+  --surface2: #1e1e1e;
+  --border: rgba(255,255,255,0.08);
+  --text: #f0ece4;
+  --muted: rgba(240,236,228,0.45);
+  --accent: #c9a96e;
+  --accent2: #e8c98a;
+  --danger: #e07070;
+  --good: #7ec8a0;
+  --mid: #e0b86a;
+  --sphere1: #c9a96e;
+  --sphere2: #9b8cbf;
+  --sphere3: #e08fa0;
+  --sphere4: #7ab8c8;
+  --sphere5: #7ec8a0;
+  --sphere6: #e0b86a;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* SCREEN MANAGEMENT */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* INTRO */
+#intro {
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+#intro::before {
+  content: '';
+  position: absolute;
+  top: -200px; left: 50%; transform: translateX(-50%);
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(201,169,110,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.intro-tag {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+.intro-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+.intro-title em {
+  color: var(--accent);
+  font-style: italic;
+}
+.intro-desc {
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 400px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.7;
+}
+.intro-meta {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+}
+.intro-meta span {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.intro-meta span::before {
+  content: '';
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: block;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #0d0d0d;
+  border: none;
+  padding: 16px 40px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  max-width: 320px;
+}
+.btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+
+/* PROGRESS BAR */
+.progress-wrap {
+  padding: 1.25rem 1.5rem 0;
+  flex-shrink: 0;
+}
+.progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.progress-label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+.progress-step { font-size: 12px; color: var(--muted); }
+.progress-bar {
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* QUESTION SCREEN */
+#questions {
+  padding: 0;
+}
+.q-content {
+  flex: 1;
+  padding: 1.5rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+}
+.block-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(201,169,110,0.12);
+  border: 1px solid rgba(201,169,110,0.25);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 20px;
+  margin-bottom: 1.25rem;
+  width: fit-content;
+}
+.q-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.25rem, 5vw, 1.6rem);
+  font-weight: 400;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+.q-hint {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+
+/* SLIDER */
+.slider-group { margin-bottom: 1.5rem; }
+.slider-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.slider-name { font-size: 13px; color: var(--muted); letter-spacing: 0.5px; }
+.slider-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  color: var(--accent);
+  min-width: 40px;
+  text-align: right;
+  line-height: 1;
+}
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 3px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--accent);
+  cursor: pointer;
+}
+.slider-marks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+.slider-marks span { font-size: 10px; color: rgba(255,255,255,0.2); }
+
+/* TIME BLOCK */
+.time-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+.time-item { display: flex; flex-direction: column; gap: 4px; }
+.time-label { font-size: 12px; color: var(--muted); }
+.time-input-wrap { position: relative; }
+.time-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 36px 10px 12px;
+  border-radius: 8px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.time-input:focus { border-color: var(--accent); }
+.time-suffix {
+  position: absolute;
+  right: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--muted);
+}
+.time-total {
+  text-align: center;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 1rem;
+  transition: all 0.3s;
+}
+.time-total.ok { background: rgba(126,200,160,0.12); color: var(--good); border: 1px solid rgba(126,200,160,0.2); }
+.time-total.over { background: rgba(224,112,112,0.12); color: var(--danger); border: 1px solid rgba(224,112,112,0.2); }
+.time-total.under { background: rgba(240,236,228,0.06); color: var(--muted); border: 1px solid var(--border); }
+
+.screen-time-note {
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 1rem;
+  font-size: 13px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.screen-time-note strong { color: var(--accent); display: block; margin-bottom: 4px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+.screen-time-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 0;
+  font-family: 'Raleway', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  outline: none;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* MULTI SELECT */
+.multi-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+.chip {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 8px 14px;
+  border-radius: 50px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+.chip:hover { border-color: rgba(201,169,110,0.4); color: var(--text); }
+.chip.selected {
+  background: rgba(201,169,110,0.15);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* NAV */
+.q-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem 1.5rem;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.btn-back {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 14px 20px;
+  border-radius: 50px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.btn-back:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+.btn-next {
+  background: var(--accent);
+  color: #0d0d0d;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+}
+.btn-next:hover { background: var(--accent2); }
+
+/* RESULT */
+#result {
+  padding: 0;
+  align-items: stretch;
+}
+.result-header {
+  padding: 2rem 1.5rem 1rem;
+  text-align: center;
+}
+.result-tag {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+.result-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.75rem, 7vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
+.result-subtitle { font-size: 14px; color: var(--muted); }
+.avg-score-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1rem 0 0.5rem;
+}
+.avg-score {
+  font-family: 'Playfair Display', serif;
+  font-size: 56px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.avg-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+.wheel-section {
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+#radarCanvas { max-width: 300px; width: 100%; }
+
+.spheres-section {
+  padding: 1rem 1.5rem;
+}
+.section-title {
+  font-size: 11px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+.sphere-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.sphere-icon { font-size: 18px; width: 28px; flex-shrink: 0; }
+.sphere-info { flex: 1; min-width: 0; }
+.sphere-row-name { font-size: 14px; color: var(--text); margin-bottom: 5px; }
+.sphere-bar-wrap { position: relative; height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.sphere-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+.sphere-zone {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+.sphere-score {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  color: var(--accent);
+  flex-shrink: 0;
+  min-width: 28px;
+  text-align: right;
+}
+
+.zones-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 1.5rem 1rem;
+}
+.zone-card {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+}
+.zone-card-title {
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.zone-card.weak .zone-card-title { color: var(--danger); }
+.zone-card.strong .zone-card-title { color: var(--good); }
+.zone-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: var(--muted);
+}
+.zone-item span:last-child {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+}
+.zone-card.weak .zone-item span:last-child { color: var(--danger); }
+.zone-card.strong .zone-item span:last-child { color: var(--good); }
+
+.insight-section {
+  margin: 0 1.5rem 1rem;
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 1.25rem;
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.insight-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: linear-gradient(180deg, var(--accent), transparent);
+}
+.insight-key { font-size: 12px; color: var(--accent); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.insight-text { font-size: 14px; color: var(--muted); line-height: 1.7; }
+.insight-text strong { color: var(--text); font-weight: 500; }
+
+.main-insight {
+  margin: 0 1.5rem 1.5rem;
+  background: rgba(201,169,110,0.08);
+  border: 1px solid rgba(201,169,110,0.2);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+.main-insight-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; font-weight: 600; }
+.main-insight-text { font-size: 14px; color: var(--text); line-height: 1.7; }
+
+/* CTA */
+.cta-section {
+  margin: 0 1.5rem 2rem;
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  text-align: center;
+}
+.cta-product { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; font-weight: 600; }
+.cta-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  line-height: 1.3;
+}
+.cta-desc { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 1.25rem; }
+.price-row { display: flex; align-items: baseline; justify-content: center; gap: 10px; margin-bottom: 1.25rem; }
+.price-new {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+.price-old { font-size: 14px; color: var(--muted); text-decoration: line-through; }
+.btn-cta {
+  display: block;
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #0d0d0d;
+  border: none;
+  padding: 16px;
+  border-radius: 50px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+  margin-bottom: 10px;
+}
+.btn-cta:hover { opacity: 0.9; transform: translateY(-1px); }
+.cta-note { font-size: 11px; color: var(--muted); }
+
+/* TRANSITIONS */
+.fade-in { animation: fadeIn 0.35s ease forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* SEPARATOR */
+.sep { height: 1px; background: var(--border); margin: 0 1.5rem; }
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="intro" class="screen active">
+  <div class="intro-tag">Диагностика</div>
+  <h1 class="intro-title">Колесо<br><em>баланса</em><br>мамы</h1>
+  <p class="intro-desc">Честный взгляд на свою жизнь. Узнай, в какой сфере у тебя перекос — и почему ты постоянно устаёшь.</p>
+  <div class="intro-meta">
+    <span>5 минут</span>
+    <span>3 блока</span>
+    <span>Личный результат</span>
+  </div>
+  <button class="btn-primary" onclick="startTest()">Начать диагностику</button>
+</div>
+
+<!-- QUESTIONS -->
+<div id="questions" class="screen">
+  <div class="progress-wrap">
+    <div class="progress-top">
+      <span class="progress-label" id="block-label">Блок 1</span>
+      <span class="progress-step" id="step-label">1 / 6</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:5%"></div></div>
+  </div>
+  <div class="q-content fade-in" id="q-content"></div>
+  <div class="q-nav">
+    <button class="btn-back" id="btn-back" onclick="prevStep()" style="display:none">←</button>
+    <button class="btn-next" id="btn-next" onclick="nextStep()">Далее →</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <div class="result-header">
+    <div class="result-tag">Результаты теста</div>
+    <h2 class="result-title">Твоя точка А</h2>
+    <p class="result-subtitle">Колесо баланса · 6 сфер</p>
+    <div class="avg-score-wrap">
+      <div class="avg-score" id="avg-score">0</div>
+      <div class="avg-label">средний балл из 10</div>
+    </div>
+  </div>
+
+  <div class="wheel-section">
+    <canvas id="radarCanvas" width="300" height="300" role="img" aria-label="Радарная диаграмма баланса по сферам жизни"></canvas>
+  </div>
+
+  <div class="spheres-section">
+    <div class="section-title">Все сферы</div>
+    <div id="spheres-list"></div>
+  </div>
+
+  <div class="sep"></div>
+  <div style="height:1rem"></div>
+
+  <div class="zones-grid">
+    <div class="zone-card weak">
+      <div class="zone-card-title">⚠ Слабые зоны</div>
+      <div id="weak-list"></div>
+    </div>
+    <div class="zone-card strong">
+      <div class="zone-card-title">💪 Сильные зоны</div>
+      <div id="strong-list"></div>
+    </div>
+  </div>
+
+  <div class="insight-section">
+    <div class="insight-key">Ключевое правило</div>
+    <div class="insight-text" id="key-rule"></div>
+  </div>
+
+  <div class="main-insight">
+    <div class="main-insight-label">Твой результат</div>
+    <div class="main-insight-text" id="main-insight"></div>
+  </div>
+
+  <div class="cta-section">
+    <div class="cta-product" id="cta-product-label">Разговор с Анастасией</div>
+    <div class="cta-title" id="cta-title">Разберём твой результат на личной диагностике</div>
+    <div class="cta-desc" id="cta-desc">Я провожу 2 диагностики в неделю — и беру только тех, кому действительно могу помочь. Заполни короткую анкету: я посмотрю твою ситуацию и напишу лично.</div>
+    <a class="btn-cta" id="cta-btn" href="https://forms.yandex.ru/u/6a102c186d2d73bf56db7d9a/?utm_source=test_balance">Заполнить анкету →</a>
+    <div class="cta-note">Онлайн · 30–40 минут · Бесплатно</div>
+  </div>
+</div>
+
+<script>
+// ---- DATA ----
+const SPHERES = [
+  { id: 'mama', icon: '🌸', name: 'Я как мама', color: '#c9a96e',
+    q: 'Насколько тебе хорошо в материнстве прямо сейчас?',
+    hint: 'Хватает ли контакта с ребёнком, терпения, радости — или это больше обязанность, чем удовольствие' },
+  { id: 'wife', icon: '💫', name: 'Я как жена', color: '#9b8cbf',
+    q: 'Насколько ты довольна отношениями с мужем?',
+    hint: 'Есть ли общение, близость, внимание, живой контакт — или вы давно стали просто партнёрами по воспитанию' },
+  { id: 'woman', icon: '✨', name: 'Я как женщина', color: '#e08fa0',
+    q: 'Чувствуешь ли ты себя живой, привлекательной, желанной?',
+    hint: 'Не как мама и не как жена — именно как женщина. Есть ли чувственность, лёгкость, ощущение себя' },
+  { id: 'self', icon: '🌿', name: 'Я для себя', color: '#7ab8c8',
+    q: 'Есть ли у тебя время просто быть — без пользы, без задач?',
+    hint: 'Время на отдых, на то что нравится, просто на себя — не потому что надо, а потому что хочется' },
+  { id: 'work', icon: '🔥', name: 'Реализация', color: '#7ec8a0',
+    q: 'Есть ли в твоей жизни движение, результат, ощущение "я на своём месте"?',
+    hint: 'Своё дело, творчество, профессиональный рост — то что даёт ощущение себя как личности, не только мамы' },
+  { id: 'energy', icon: '⚡', name: 'Состояние', color: '#e0b86a',
+    q: 'Как у тебя с энергией, ресурсом и внутренним спокойствием?',
+    hint: 'Хватает ли сил, есть ли ощущение что ты справляешься — или живёшь на последнем' }
+];
+
+const TIME_CATS = [
+  { id: 'children', label: 'Дети' },
+  { id: 'partner', label: 'Отношения' },
+  { id: 'work', label: 'Работа / дело' },
+  { id: 'home', label: 'Быт' },
+  { id: 'phone', label: 'Телефон' },
+  { id: 'body', label: 'Тело / спорт / уход' },
+  { id: 'learning', label: 'Обучение / развитие' },
+  { id: 'rest', label: 'Отдых / хобби' },
+  { id: 'sleep', label: 'Сон' }
+];
+
+const WANT_MORE = ['Времени с детьми','Близости с мужем','Времени для себя','Отдыха','Реализации','Спокойствия','Энергии'];
+const WANT_LESS = ['Телефона','Хаоса','Тревожных мыслей','Бытовых задач','Перегруза','Чувства вины'];
+
+// ---- STATE ----
+let scores = {};
+let weekdayTime = {};
+let weekendTime = {};
+let screenTime = '';
+let wantMore = [];
+let wantLess = [];
+let currentStep = 0;
+
+const TOTAL_STEPS = 6 + 1 + 1 + 1; // 6 spheres + weekday + weekend + wants
+
+// ---- NAVIGATION ----
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startTest() {
+  currentStep = 0;
+  renderStep();
+  showScreen('questions');
+}
+
+function nextStep() {
+  if (!saveStep()) return;
+  currentStep++;
+  if (currentStep >= TOTAL_STEPS) { showResult(); return; }
+  renderStep();
+  window.scrollTo(0,0);
+}
+
+function prevStep() {
+  if (currentStep <= 0) { showScreen('intro'); return; }
+  currentStep--;
+  renderStep();
+  window.scrollTo(0,0);
+}
+
+function saveStep() {
+  if (currentStep < 6) {
+    const val = parseInt(document.getElementById('sl-main').value);
+    scores[SPHERES[currentStep].id] = val;
+    return true;
+  }
+  if (currentStep === 6) {
+    let total = 0;
+    TIME_CATS.forEach(c => {
+      const v = parseFloat(document.getElementById('wd-'+c.id).value) || 0;
+      weekdayTime[c.id] = v;
+      total += v;
+    });
+    const st = document.getElementById('screen-time-input');
+    if (st) screenTime = st.value;
+    return true;
+  }
+  if (currentStep === 7) {
+    let total = 0;
+    TIME_CATS.forEach(c => {
+      const v = parseFloat(document.getElementById('we-'+c.id).value) || 0;
+      weekendTime[c.id] = v;
+      total += v;
+    });
+    return true;
+  }
+  if (currentStep === 8) {
+    wantMore = [...document.querySelectorAll('#want-more .chip.selected')].map(c => c.dataset.val);
+    wantLess = [...document.querySelectorAll('#want-less .chip.selected')].map(c => c.dataset.val);
+    return true;
+  }
+  return true;
+}
+
+// ---- RENDER STEPS ----
+function renderStep() {
+  const prog = Math.round((currentStep / TOTAL_STEPS) * 100) + 3;
+  document.getElementById('prog-fill').style.width = prog + '%';
+  document.getElementById('btn-back').style.display = currentStep > 0 ? 'block' : 'none';
+
+  const isLast = currentStep === TOTAL_STEPS - 1;
+  document.getElementById('btn-next').textContent = isLast ? 'Показать результат →' : 'Далее →';
+
+  const content = document.getElementById('q-content');
+  content.className = 'q-content fade-in';
+  void content.offsetWidth;
+
+  if (currentStep < 6) {
+    renderSphereQ(currentStep, content);
+  } else if (currentStep === 6) {
+    renderTimeQ('weekday', content);
+  } else if (currentStep === 7) {
+    renderTimeQ('weekend', content);
+  } else if (currentStep === 8) {
+    renderWantsQ(content);
+  }
+}
+
+function renderSphereQ(idx, el) {
+  const s = SPHERES[idx];
+  const saved = scores[s.id] ?? 5;
+  document.getElementById('block-label').textContent = 'Блок 1 — Удовлетворение';
+  document.getElementById('step-label').textContent = (idx+1) + ' / 6';
+
+  el.innerHTML = `
+    <div class="block-badge">${s.icon} ${s.name}</div>
+    <div class="q-title">${s.q}</div>
+    <div class="q-hint">${s.hint}</div>
+    <div class="slider-group">
+      <div class="slider-top">
+        <span class="slider-name">Оцени от 0 до 10</span>
+        <span class="slider-value" id="score-display">${saved}</span>
+      </div>
+      <input type="range" min="0" max="10" step="1" value="${saved}" id="sl-main"
+        style="background: linear-gradient(to right, ${s.color} 0%, ${s.color} ${saved*10}%, rgba(255,255,255,0.1) ${saved*10}%, rgba(255,255,255,0.1) 100%)"
+        oninput="
+          document.getElementById('score-display').textContent=this.value;
+          const pct=this.value*10;
+          this.style.background='linear-gradient(to right, ${s.color} 0%, ${s.color} '+pct+'%, rgba(255,255,255,0.1) '+pct+'%, rgba(255,255,255,0.1) 100%)'
+        ">
+      <div class="slider-marks">
+        <span>0 — совсем нет</span>
+        <span>10 — всё отлично</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderTimeQ(type, el) {
+  const isWd = type === 'weekday';
+  document.getElementById('block-label').textContent = 'Блок 2 — Время';
+  document.getElementById('step-label').textContent = isWd ? '7 / 9' : '8 / 9';
+  const saved = isWd ? weekdayTime : weekendTime;
+  const prefix = isWd ? 'wd-' : 'we-';
+
+  let rows = TIME_CATS.map(c => `
+    <div class="time-item">
+      <div class="time-label">${c.label}</div>
+      <div class="time-input-wrap">
+        <input class="time-input" type="number" min="0" max="24" step="0.5" value="${saved[c.id]||''}"
+          placeholder="0" id="${prefix}${c.id}" oninput="updateTotal('${type}')">
+        <span class="time-suffix">ч</span>
+      </div>
+    </div>
+  `).join('');
+
+  el.innerHTML = `
+    <div class="block-badge">⏱ ${isWd ? 'Будний день' : 'Выходной день'}</div>
+    <div class="q-title">${isWd ? 'Как проходит твой обычный день?' : 'А в выходные?'}</div>
+    <div class="q-hint">Укажи, сколько часов в среднем уходит на каждое. Всего должно получиться около 24 часов.</div>
+    <div class="time-grid">${rows}</div>
+    <div class="time-total under" id="total-${type}">Итого: 0 / 24 ч</div>
+    ${isWd ? `<div class="screen-time-note">
+      <strong>Лайфхак</strong>
+      Зайди в настройки телефона → Экранное время. Сколько часов в день ты проводишь в телефоне на самом деле?
+      <input class="screen-time-input" type="text" placeholder="Например: 4" id="screen-time-input" value="${screenTime}">
+    </div>` : ''}
+  `;
+  updateTotal(type);
+}
+
+function updateTotal(type) {
+  const prefix = type === 'weekday' ? 'wd-' : 'we-';
+  let total = 0;
+  TIME_CATS.forEach(c => {
+    total += parseFloat(document.getElementById(prefix+c.id)?.value) || 0;
+  });
+  total = Math.round(total * 10) / 10;
+  const el = document.getElementById('total-'+type);
+  if (!el) return;
+  el.innerHTML = total > 24
+    ? `Итого: ${total} ч — больше 24, это нормально: многое происходит одновременно`
+    : `Итого: ${total} / 24 ч`;
+  el.className = 'time-total ' + (total >= 22 ? 'ok' : 'under');
+}
+
+function renderWantsQ(el) {
+  document.getElementById('block-label').textContent = 'Блок 3 — Желания';
+  document.getElementById('step-label').textContent = '9 / 9';
+
+  const moreHtml = WANT_MORE.map(w => `<div class="chip ${wantMore.includes(w)?'selected':''}" data-val="${w}" onclick="toggleChip(this,'want-more')">${w}</div>`).join('');
+  const lessHtml = WANT_LESS.map(w => `<div class="chip ${wantLess.includes(w)?'selected':''}" data-val="${w}" onclick="toggleChip(this,'want-less')">${w}</div>`).join('');
+
+  el.innerHTML = `
+    <div class="block-badge">💭 Чего ты хочешь</div>
+    <div class="q-title">Честно — чего не хватает?</div>
+    <div class="q-hint">Выбери всё, что откликается</div>
+    <div class="slider-name" style="margin-bottom:10px;margin-top:0.5rem">Хочу больше:</div>
+    <div class="multi-grid" id="want-more">${moreHtml}</div>
+    <div class="slider-name" style="margin-bottom:10px;margin-top:1rem">Хочу меньше:</div>
+    <div class="multi-grid" id="want-less">${lessHtml}</div>
+  `;
+}
+
+function toggleChip(el, groupId) {
+  el.classList.toggle('selected');
+}
+
+// ---- RESULT ----
+function showResult() {
+  saveStep();
+  showScreen('result');
+  const vals = SPHERES.map(s => scores[s.id] ?? 5);
+  const avg = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length * 10) / 10;
+  document.getElementById('avg-score').textContent = avg.toFixed(1);
+
+  drawRadar(vals);
+  renderSpheresList(vals);
+  renderZones(vals);
+  renderInsight(vals);
+  renderCTA(vals);
+}
+
+function getZone(v) {
+  if (v >= 7.5) return { label: 'Зона силы', cls: 'good' };
+  if (v >= 5) return { label: 'Рабочая зона', cls: 'mid' };
+  return { label: 'Зона развития', cls: 'danger' };
+}
+
+function renderSpheresList(vals) {
+  const list = document.getElementById('spheres-list');
+  list.innerHTML = SPHERES.map((s,i) => {
+    const v = vals[i];
+    const zone = getZone(v);
+    const pct = v * 10;
+    const color = v >= 7.5 ? 'var(--good)' : v >= 5 ? 'var(--mid)' : 'var(--danger)';
+    return `<div class="sphere-row">
+      <div class="sphere-icon">${s.icon}</div>
+      <div class="sphere-info">
+        <div class="sphere-row-name">${s.name}</div>
+        <div class="sphere-bar-wrap"><div class="sphere-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>
+      <div class="sphere-zone" style="background:${color}22;color:${color}">${zone.label}</div>
+      <div class="sphere-score">${v}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderZones(vals) {
+  const sorted = SPHERES.map((s,i) => ({...s, val: vals[i]})).sort((a,b)=>a.val-b.val);
+  const weak = sorted.slice(0,3);
+  const strong = sorted.slice(-3).reverse();
+
+  document.getElementById('weak-list').innerHTML = weak.map(s =>
+    `<div class="zone-item"><span>${s.icon} ${s.name.replace('Я как ','').replace('Я для ','').replace('Я как ','')}</span><span>${s.val}</span></div>`
+  ).join('');
+  document.getElementById('strong-list').innerHTML = strong.map(s =>
+    `<div class="zone-item"><span>${s.icon} ${s.name.replace('Я как ','').replace('Я для ','')}</span><span>${s.val}</span></div>`
+  ).join('');
+}
+
+function renderInsight(vals) {
+  const minIdx = vals.indexOf(Math.min(...vals));
+  const minSphere = SPHERES[minIdx];
+  const minVal = vals[minIdx];
+
+  const rules = {
+    mama: 'У тебя просела сфера материнства — скорее всего, ты выполняешь все функции, но внутри нет радости и лёгкости. Это не потому что ты плохая мама. Это потому что ты давно не наполняла себя.',
+    wife: 'Сфера отношений требует внимания. Вы с мужем, вероятно, превратились в партнёров по воспитанию — всё работает, но близости почти нет. Это можно вернуть.',
+    woman: 'Женщина внутри тебя немного потерялась. Мама, жена, хозяйка — всё есть. А вот просто женщина — желанная, лёгкая, чувственная — куда-то ушла.',
+    self: 'Ты совсем не уделяешь время себе. Сначала все остальные, себя — в последнюю очередь. Именно отсюда берётся усталость, которую никто вокруг не видит.',
+    work: 'Ощущение реализации просело. Ты много делаешь, но нет ощущения "я на своём месте". Это не кризис — это сигнал, что что-то важное ждёт тебя.',
+    energy: 'Ресурс на нуле. Ты тянешь всё из последних сил, и это видно. Сначала нужно восстановить себя — и только потом всё остальное встанет на место.'
+  };
+
+  document.getElementById('key-rule').innerHTML = `Твой результат определяется не средним баллом, а <strong>самой просевшей сферой</strong>. Пока там перекос — остальное тоже не будет в радость.<br><br><strong>Главная точка внимания: ${minSphere.icon} ${minSphere.name} (${minVal}/10)</strong>`;
+  document.getElementById('main-insight').innerHTML = rules[minSphere.id] || `Сфера "${minSphere.name}" просит внимания. Именно с неё стоит начать.`;
+}
+
+function renderCTA(vals) {
+  const minIdx = vals.indexOf(Math.min(...vals));
+  const minSphere = SPHERES[minIdx];
+  document.getElementById('cta-product-label').textContent = `${minSphere.icon} Слабая зона: ${minSphere.name}`;
+}
+
+// ---- RADAR ----
+function drawRadar(vals) {
+  const canvas = document.getElementById('radarCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
+  const R = Math.min(W,H)*0.38;
+  const N = vals.length;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Grid
+  for (let ring = 1; ring <= 5; ring++) {
+    const r = R * ring/5;
+    ctx.beginPath();
+    for (let i=0;i<N;i++) {
+      const angle = (i/N)*Math.PI*2 - Math.PI/2;
+      const x = cx + r*Math.cos(angle), y = cy + r*Math.sin(angle);
+      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Axes
+  for (let i=0;i<N;i++) {
+    const angle = (i/N)*Math.PI*2 - Math.PI/2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+R*Math.cos(angle), cy+R*Math.sin(angle));
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Data shape
+  ctx.beginPath();
+  vals.forEach((v,i) => {
+    const angle = (i/N)*Math.PI*2 - Math.PI/2;
+    const r = R * v/10;
+    const x = cx + r*Math.cos(angle), y = cy + r*Math.sin(angle);
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(201,169,110,0.18)';
+  ctx.fill();
+  ctx.strokeStyle = '#c9a96e';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Dots
+  vals.forEach((v,i) => {
+    const angle = (i/N)*Math.PI*2 - Math.PI/2;
+    const r = R * v/10;
+    const x = cx + r*Math.cos(angle), y = cy + r*Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(x,y,5,0,Math.PI*2);
+    ctx.fillStyle = '#c9a96e';
+    ctx.fill();
+    ctx.strokeStyle = '#0d0d0d';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // Labels
+  ctx.font = '500 12px Raleway, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  SPHERES.forEach((s,i) => {
+    const angle = (i/N)*Math.PI*2 - Math.PI/2;
+    const lr = R * 1.22;
+    const lx = cx + lr*Math.cos(angle);
+    const ly = cy + lr*Math.sin(angle);
+    const v = vals[i];
+    const color = v >= 7.5 ? '#7ec8a0' : v >= 5 ? '#e0b86a' : '#e07070';
+    ctx.fillStyle = color;
+    ctx.fillText(`${s.icon} ${v}`, lx, ly);
+  });
+}
+</script>
+</body>
+</html>
