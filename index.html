@@ -905,6 +905,51 @@ function showResult() {
   renderZones(vals);
   renderInsight(vals);
   renderCTA(vals);
+
+  // Прокидываем результаты теста в ссылку на анкету (предзаполнение Яндекс.Формы)
+  document.getElementById('cta-btn').href = buildFormUrl(vals, avg);
+}
+
+// Собирает ссылку на анкету с результатами теста в параметрах.
+// Яндекс.Форма подставит значение в поле, у которого «Идентификатор вопроса»
+// совпадает с именем параметра. Лишние параметры форма просто игнорирует.
+function buildFormUrl(vals, avg) {
+  const base = 'https://forms.yandex.ru/u/6a102c186d2d73bf56db7d9a/';
+  const shortName = { mama:'Мама', wife:'Жена', woman:'Женщина', self:'Себе', work:'Реализация', energy:'Состояние' };
+
+  const sorted = SPHERES.map((s,i) => ({ id:s.id, name:shortName[s.id], val:vals[i] })).sort((a,b)=>a.val-b.val);
+  const weak = sorted.slice(0,3);
+  const strong = sorted.slice(-3).reverse();
+
+  const spheresStr = SPHERES.map((s,i) => `${shortName[s.id]} ${vals[i]}`).join(', ');
+  const weakStr = weak.map(s => `${s.name} ${s.val}`).join(', ');
+  const strongStr = strong.map(s => `${s.name} ${s.val}`).join(', ');
+
+  const timeStr = (obj) => TIME_CATS.map(c => obj[c.id] ? `${c.label} ${obj[c.id]}ч` : null).filter(Boolean).join(', ');
+  const budni = timeStr(weekdayTime);
+  const vyhod = timeStr(weekendTime);
+
+  const summary =
+    `Средний балл: ${avg}/10\n` +
+    `Сферы: ${spheresStr}\n` +
+    `Слабые зоны: ${weakStr}\n` +
+    `Сильные зоны: ${strongStr}\n` +
+    `Хочет больше: ${wantMore.join(', ') || '—'}\n` +
+    `Хочет меньше: ${wantLess.join(', ') || '—'}\n` +
+    `Время (будни): ${budni || '—'}\n` +
+    `Время (выходные): ${vyhod || '—'}\n` +
+    `Экранное время: ${screenTime || '—'}`;
+
+  // Полный расклад целиком лежит в rezultat. Остальные параметры — «дешёвые»
+  // числовые/короткие поля, если Насте удобнее отдельные колонки в выгрузке.
+  const params = new URLSearchParams();
+  params.set('utm_source', 'test_balance');
+  params.set('rezultat', summary);              // полная сводка (это поле — минимум для настройки)
+  params.set('ball', String(avg));              // средний балл
+  SPHERES.forEach((s,i) => params.set(s.id, String(vals[i]))); // mama, wife, woman, self, work, energy — баллы
+  params.set('slabaya_zona', weakStr);          // 3 самые просевшие сферы с баллами
+
+  return base + '?' + params.toString();
 }
 
 function getZone(v) {
